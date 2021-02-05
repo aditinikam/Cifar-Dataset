@@ -77,9 +77,8 @@ def train(model, use_cuda, train_loader, optimizer, epoch):
         # Converting the data to [batch_size, 784] from [batch_size, 1, 28, 28]
 
         y_onehot = torch.zeros([target.shape[0], 10])  # Zero vector of shape [64, 10]
-        # y_onehot[range(target.shape[0]), target] = 1
-        for idx, val in enumerate(target.shape):
-            y_onehot[idx][val] = 1
+        y_onehot[range(target.shape[0]), target.long()] = 1
+        
 
         data = data.view([data.shape[0], 3072])
 
@@ -92,7 +91,7 @@ def train(model, use_cuda, train_loader, optimizer, epoch):
         loss.backward()  # Calculating the gradients of the model. Note that the model has not yet been updated.
         optimizer.step()  # Updating the model parameters. Note that this does not remove the stored gradients!
 
-        if batch_idx % 2000 == 0:
+        if batch_idx % 20 == 0:
             print('Train Epoch: {} [{}/{} ({:.0f}%)]\tLoss: {:.6f}'.format(
                 epoch, batch_idx * len(data), len(train_loader.dataset),
                 100. * batch_idx / len(train_loader), loss.item()))
@@ -155,16 +154,17 @@ def main():
 
     transform = transforms.Compose(
         [transforms.ToTensor(),
-        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
 
     trainset = np.load('trainImages.npy')
     trainLabel = np.load('trainLabels.npy')
-    # trainset = torchvision.datasets.CIFAR10(root='./data', train=True,download=True, transform=transform)
+    # trainset = torchvision.datasets.MNIST(root='./data', train=True,download=True, transform=transform)
     # trainloader = torch.utils.data.DataLoader(trainset, batch_size=4, shuffle=True, num_workers=2)
     trainloader=DataLoader(
         customDatasetClass(trainset,trainLabel),
-        batch_size=4,
-        num_workers=8,
+        batch_size=20,
+        num_workers=2,
         shuffle=True
     )
 
@@ -175,15 +175,15 @@ def main():
     if use_cuda:
         model = model.cuda()  # Put the model weights on GPU
 
-    optimizer = optim.SGD(model.parameters(), lr=10)  # Choose the optimizer and the set the learning rate
+    optimizer = optim.Adam(model.parameters(), lr=0.001)  # Choose the optimizer and the set the learning rate
     testset = np.load('testImages.npy')
     testLabel=np.load('testLabels.npy')
     # testset = torchvision.datasets.CIFAR10(root='./data', train=False,download=True, transform=transform)
     # testloader = torch.utils.data.DataLoader(testset, batch_size=4,shuffle=False, num_workers=2)
     testloader=DataLoader(
         customDatasetClass(testset,testLabel),
-        batch_size=4,
-        num_workers=8,
+        batch_size=20,
+        num_workers=2,
         shuffle=True
     )
 
